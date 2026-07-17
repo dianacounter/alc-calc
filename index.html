@@ -116,7 +116,24 @@
     let currentWeight = 0;
     let stocks = {1:0, 2:0, 3:0, 4:0, 5:0};
 
-    window.onload = function() { activeInput.focus(); };
+    // ⌨️ パソコンの物理キーボード入力を受け付ける設定を合体
+    window.onload = function() { 
+        activeInput.focus(); 
+
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            if ((key >= '0' && key <= '9') || key === '.') {
+                pressKey(key);
+            } else if (key === 'Backspace') {
+                pressKey('del');
+            } else if (key === 'Delete' || key === 'Escape') {
+                pressKey('C');
+            } else if (key === 'Enter') {
+                pressKey('OK');
+            }
+        });
+    };
+
     function selectT(value, element) {
         selectedT = value;
         document.querySelectorAll('.switch-btn').forEach(btn => btn.classList.remove('active'));
