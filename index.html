@@ -133,22 +133,21 @@
     <div class="total-box" id="total_weight">ストック総合計: 0.00 kg</div>
 </div>
 <script>
+    // ⚠️ 注意点1: ALCの標準厚み（初期値100mm）に設定
     let selectedT = 100;
-    let activeInput = document.getElementById('h_val');
-    let isOverwriteMode = true;
+    let activeInput = document.getElementById('h_val'); 
+    let isOverwriteMode = true; 
     let currentWeight = 0;
+    
+    // 💡 絶対に文字が消えない安全な形式でストックを初期化
     let stocks = {1:0, 2:0, 3:0, 4:0, 5:0};
 
-    // ⌨️ パソコンの物理キーボード入力を受け付ける設定を合体
-    window.onload = function() {
-        activeInput.focus();
-        if (typeof calc === 'function') calc();
+    // ⌨️ パソコンの物理キーボード・テンキー入力を受け付けるもっともシンプルな設定
+    window.onload = function() { 
+        activeInput.focus(); 
 
-        // ⌨️ パソコンの物理キーボード入力を受け付ける設定（F1〜F5対応）
         document.addEventListener('keydown', function(event) {
             const key = event.key;
-            
-            // 1. 通常の数字と操作の入力
             if ((key >= '0' && key <= '9') || key === '.') {
                 pressKey(key);
             } else if (key === 'Backspace') {
@@ -158,44 +157,6 @@
             } else if (key === 'Enter') {
                 pressKey('OK');
             }
-            
-            // 2. ↕️ 左右上下の矢印キーで入力欄を移動
-            else if (key === 'ArrowDown' || key === 'ArrowRight') {
-                event.preventDefault();
-                pressKey('OK');
-            } else if (key === 'ArrowUp' || key === 'ArrowLeft') {
-                event.preventDefault();
-                if (activeInput.id === 'w_val') {
-                    setActiveInput(document.getElementById('h_val'));
-                } else if (activeInput.id === 'count') {
-                    setActiveInput(document.getElementById('w_val'));
-                }
-                activeInput.focus();
-            }
-
-            // 3. 📥 F1 〜 F5 キーでストックの保存・消去を制御
-            // 正規表現を使って「F1」から「F5」が押されたかを判定します
-            else if (/^F[1-5]$/.test(key)) {
-                event.preventDefault(); // ブラウザのヘルプ画面が開くのを防止する
-                const stockNum = parseInt(key.charAt(1)); // 「F3」なら「3」を取得
-
-                if (event.shiftKey) {
-                    // ❌ Shift + F1〜F5 が押されたら、その番号のストックを消去
-                    if (typeof clearStock === 'function') clearStock(stockNum);
-                } else {
-                    // 📥 F1〜F5 が普通に押されたら、その番号のストックに保存
-                    if (typeof saveStock === 'function') saveStock(stockNum);
-                }
-            }
-        });
-
-        // 🔄 TabやShift+Tabでの移動を検知する設定
-        const inputs = [document.getElementById('h_val'), document.getElementById('w_val'), document.getElementById('count')];
-        inputs.forEach(function(inputElement) {
-            if (!inputElement) return;
-            inputElement.addEventListener('focus', function() {
-                setActiveInput(this);
-            });
         });
     };
 
@@ -205,7 +166,12 @@
         element.classList.add('active');
         calc();
     }
-    function setActiveInput(inputElement) { activeInput = inputElement; isOverwriteMode = true; }
+
+    function setActiveInput(inputElement) { 
+        activeInput = inputElement; 
+        isOverwriteMode = true; 
+    }
+
     function changeCount(amount) {
         const countInput = document.getElementById('count');
         let currentCount = parseFloat(countInput.value) || 0;
@@ -217,7 +183,8 @@
     function pressKey(key) {
         if (!activeInput) return;
         if (key === 'del') {
-            if (isOverwriteMode) { activeInput.value = ''; } else { activeInput.value = activeInput.value.slice(0, -1); }
+            if (isOverwriteMode) { activeInput.value = ''; } 
+            else { activeInput.value = activeInput.value.slice(0, -1); }
             isOverwriteMode = false;
         } else if (key === 'C') {
             activeInput.value = ''; isOverwriteMode = false;
@@ -227,51 +194,68 @@
             activeInput.focus();
         } else {
             if (isOverwriteMode) {
-                if (key === '00') { activeInput.value = '0'; } else { activeInput.value = key; }
+                if (key === '00') { activeInput.value = '0'; } 
+                else { activeInput.value = key; }
                 isOverwriteMode = false;
             } else {
-                if (activeInput.value === '0' && key !== '.') { activeInput.value = key; } else { activeInput.value += key; }
+                if (activeInput.value === '0' && key !== '.') { activeInput.value = key; } 
+                else { activeInput.value += key; }
             }
         }
         activeInput.focus();
         calc();
     }
+
+    // ⚠️ 注意点2: メースの平米重量ではなく、ALC用の体積×比重（650）の計算式に戻しています
     function calc() {
         const h = Math.max(0, parseFloat(document.getElementById('h_val').value) || 0);
         const w = Math.max(0, parseFloat(document.getElementById('w_val').value) || 0);
         const count = Math.max(0, parseFloat(document.getElementById('count').value) || 0);
+        
+        // 📐 ALC重量計算公式: (厚み × 長さ × 幅) / 1,000,000,000 × 比重650 × 枚数
         const volume = (selectedT * h * w) / 1000000000;
         currentWeight = volume * 650 * count;
+        
         const resultBox = document.getElementById('result');
         resultBox.innerText = "現在の重量: " + currentWeight.toFixed(2) + " kg";
-        if (currentWeight >= 1000) { resultBox.classList.add('danger'); } else { resultBox.classList.remove('danger'); }
+        
+        if (currentWeight >= 1000) { 
+            resultBox.classList.add('danger'); 
+        } else { 
+            resultBox.classList.remove('danger'); 
+        }
     }
+
     function saveStock(num) {
         stocks[num] = currentWeight;
         document.getElementById('stock_' + num).innerText = currentWeight.toFixed(2) + " kg";
         calcTotal();
     }
+
     function clearStock(num) {
         stocks[num] = 0;
         document.getElementById('stock_' + num).innerText = "0.00 kg";
         calcTotal();
     }
+
     function calcTotal() {
         let total = stocks[1] + stocks[2] + stocks[3] + stocks[4] + stocks[5];
         const totalBox = document.getElementById('total_weight');
         totalBox.innerText = "ストック総合計: " + total.toFixed(2) + " kg";
-        if (total >= 1000) { totalBox.classList.add('danger'); } else { totalBox.classList.remove('danger'); }
-    }
-    calc();
-
-    // 📋 ヘルプ画面を表示・非表示にする関数を追加
-    function toggleHelpModal(show) {
-        const modal = document.getElementById('helpModal');
-        if (modal) {
-            modal.style.display = show ? 'flex' : 'none';
+        
+        if (total >= 1000) { 
+            totalBox.classList.add('danger'); 
+        } else { 
+            totalBox.classList.remove('danger'); 
         }
     }
 
+    function toggleHelpModal(show) {
+        const modal = document.getElementById('helpModal');
+        if (modal) { modal.style.display = show ? 'flex' : 'none'; }
+    }
+
+    calc();
 </script>
 </body>
 </html>
